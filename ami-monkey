@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# ami monkey - deletes unloved amis
+# amis that are not deleted:
+# - amis used by ec2 instances
+# - 5 most recent of a given type, based on name-version_numner
+# - paremt amis - based on parent tag
+# requires ruby 2.1.X
+# TODO break into def
+
+
+require 'rubygems'
+require 'aws-sdk-v1'
+require 'pp'
+
+AWS.config(
+  :access_key_id => '',
+  :secret_access_key =>'',
+  :region => 'us-west-2')
+
+
+ec2 = AWS::EC2.new
+
+# get a list of amis that are in use
+ec2_amis = Array.new
+AWS.memoize {
+	ec2.instances.each do |i|
+		ec2_amis |= [i.image_id]
+	end
+}
+
+parent_amis = Array.new
+amis_by_name = Hash.new{|hash, key| hash[key] = Hash.new}
+my_ami_ids = Array.new
+
+AWS.memoize {
+	# get a list of amis we created
+	my_amis = ec2.images.with_owner('self')
+	my_amis.each do |ami|
+		my_ami_ids |= [ami.id]
+		version = ami.name.split("-").last.to_i
+		name = ami.name.gsub(/-build-\d+/, "")
+		# hash of hash - it's legal here.... aminame - version - ami-id
+		amis_by_name[name][version] = ami.id
+		# get list of parent amis
+		if (ami.tags[:parent_ami_version] =~ /ami-*/)
+			parent_amis |=  [ami.tags[:parent_ami_version]]
+		end
+	end
+}
+
+most_recently_created_amis = Array.new
+amis_by_name.each_key do |name|
+	# reverse sort based on version and grab the first 5
+	reverse_sort_by_version = amis_by_name[name].sort_by{ |k,v| k}.reverse.first 5
+	reverse_sort_by_version.to_h.each_value do |ami|
+		most_recently_created_amis |= [ami]
+	end
+end
+
+#create the list to delete
+amis_to_keep = (most_recently_created_amis + ec2_amis + parent_amis).uniq
+amis_to_delete = (my_ami_ids-amis_to_keep).uniq
+puts amis_to_delete

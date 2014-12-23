@@ -1,0 +1,1 @@
+a simple script that removes AMIs that are not being used. It removes AMIs you created unless they are being used by an EC2 instance, is a parent AMI, or is one of the 5 most recent of a particular build.
