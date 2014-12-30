@@ -79,5 +79,5 @@ while true
 		delete(amis_to_delete)
 	end
 	puts "sleeping"
-	sleep(60)
+	sleep(360)
 end
