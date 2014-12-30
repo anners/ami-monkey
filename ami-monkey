@@ -5,15 +5,19 @@
 # - 5 most recent of a given type, based on name-version_numner
 # - paremt amis - based on parent tag
 # requires ruby 2.1.X
-# TODO add logging and remove lame while loop 
+# loggin added to stdout
+# TODO add logging to a logfile and remove lame while loop 
 
 
 require 'rubygems'
 require 'aws-sdk-v1'
+require 'log4r'
 require 'pp'
 
 AWS.config(:region => 'us-west-2')
 
+@logger = Log4r::Logger.new('ami-monkey')
+@logger.outputters << Log4r::Outputter.stdout
 
 def get_amis_in_use ()
 # get a list of amis that are in use
@@ -63,21 +67,28 @@ def get_amis_to_delete (ec2_amis)
 end
 
 def delete (amis_to_delete)
+	ec2 = AWS::EC2.new
 	# delete ami
 	amis_to_delete.each do |ami|
   	# put in some logging
-  	puts "deleteing #{ami}"
+  	@logger.info("deleteing #{ami}")
+	begin
   	ec2.images[ami].deregister
+	rescue AWS::EC2::Errors::InvalidAMIID::Unavailable
+		@logger.debug("#{ami} Unavailable")
+	end
 	end
 end
 
+logger = set_logger('ami-monkey')
 while true
 	ec2_amis = get_amis_in_use()
 	amis_to_delete = get_amis_to_delete(ec2_amis)
 	if !amis_to_delete.empty?
-		puts "delete"
+		@logger.info('starting delete')
 		delete(amis_to_delete)
+		@logger.info('finished delete')
 	end
-	puts "sleeping"
-	sleep(360)
+	@logger.info('sleeping for 60')
+	sleep(60)
 end
