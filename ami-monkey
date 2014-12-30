@@ -88,6 +88,6 @@ while true
 		delete(amis_to_delete)
 		@logger.info('finished delete')
 	end
-	@logger.info('sleeping for 60')
+	@logger.info('sleeping for 360 seconds')
 	sleep(360)
 end
