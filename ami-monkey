@@ -80,7 +80,6 @@ def delete (amis_to_delete)
 	end
 end
 
-logger = set_logger('ami-monkey')
 while true
 	ec2_amis = get_amis_in_use()
 	amis_to_delete = get_amis_to_delete(ec2_amis)
