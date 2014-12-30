@@ -75,7 +75,7 @@ def delete (amis_to_delete)
 	begin
   	ec2.images[ami].deregister
 	rescue AWS::EC2::Errors::InvalidAMIID::Unavailable
-		@logger.debug("#{ami} Unavailable")
+		@logger.error("#{ami} Unavailable")
 	end
 	end
 end
