@@ -89,5 +89,5 @@ while true
 		@logger.info('finished delete')
 	end
 	@logger.info('sleeping for 60')
-	sleep(60)
+	sleep(360)
 end
